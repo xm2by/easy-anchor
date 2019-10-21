@@ -1,5 +1,5 @@
 <template>
-  <div class="anchor-wrapper">
+  <div ref="anchor" class="anchor-wrapper" :style="{ top: position.top || 100 + 'px', left: `calc(100% - ${position.right || 200}px)`}">
     <template v-for="item in titleList">
       <anchor-group 
         v-if="item.children && item.children.length" 
@@ -7,7 +7,19 @@
         :data="item"
         @locateTitle="handleLocateTitle">
         <template v-for="val in item.children">
-          <anchor-item 
+          <anchor-group 
+            v-if="val.children && val.children.length" 
+            :key="val.id" 
+            :data="val"
+            @locateTitle="handleLocateTitle">
+            <anchor-item
+              v-for="v in val.children"
+              :key="v.id" 
+              :data="v" 
+              @locateTitle="handleLocateTitle"></anchor-item>
+          </anchor-group>
+          <anchor-item
+            v-else
             :key="val.id" 
             :data="val" 
             @locateTitle="handleLocateTitle"></anchor-item>
@@ -19,15 +31,21 @@
         :data="item" 
         @locateTitle="handleLocateTitle"></anchor-item>
     </template>
+    <div class="acitve-anchor-circle" :style="{top: activeAnchorTop + 'px', left: '13px'}"></div>
   </div>
 </template>
 
 <script>
 import AnchorItem from './AnchorItem.vue'
 import AnchorGroup from './AnchorGroup.vue'
-import { EventListener, nestToSimple } from './utils.js'
+import { EventListener, nestToSimple, getRelativePosition } from './utils.js'
 export default {
   name: 'anchor',
+  provide() {
+    return {
+      anchor: this
+    }
+  },
   components: {
     AnchorItem,
     AnchorGroup
@@ -54,16 +72,18 @@ export default {
       scrollContainer: null,
       scrollEle: null,
       allTitleOffsetTop: [],
-      simpleTitleList: [],
-      currentAnchor: null
+      currentAnchorId: null,
+      activeAnchorTop: 0
     }
   },
-  watch: {
-    currentAnchor(val){
-     this.setUrlHash(val.id)
-    }
+  computed: {
+    simpleTitleList() {
+      return this.nestToSimple(this.titleList)
+    },
   },
   mounted() {
+    this.currentAnchorId = this.simpleTitleList[0].id
+    this.setActiveAnchorCirclePosition()
     this.getScrollObj()
     this.getAllTitleOffsetTop()
     EventListener.add(this.scrollContainer, 'scroll', this.handleScroll)
@@ -72,6 +92,7 @@ export default {
     EventListener.remove(this.scrollContainer, 'scroll', this.handleScroll)
   },
   methods: {
+    nestToSimple,
     // 获取滚动内容的外层容器对象及DOM
     getScrollObj() {
       if(this.container){
@@ -87,7 +108,9 @@ export default {
       let titleEle = document.querySelector(`#${data.id}`)
       this.scrollEle.scrollTop = titleEle.offsetTop
       setTimeout(() => {
-        this.setUrlHash(data.id)
+        this.currentAnchorId = data.id
+        this.setUrlHash(this.currentAnchorId)
+        this.setActiveAnchorCirclePosition()
       })
     },
     // 设置路径hash
@@ -104,7 +127,6 @@ export default {
     },
     // 获取所有锚点对应标题在滚动内容区域中距离顶部的距离
     getAllTitleOffsetTop() {
-      this.simpleTitleList = nestToSimple(this.titleList)
       let i = -1
       let len = this.simpleTitleList.length
       while(++i < len){
@@ -119,11 +141,19 @@ export default {
         let curAnchorScrollTop = this.allTitleOffsetTop[i]
         let nextAnchorScrollTop = this.allTitleOffsetTop[i+1]
         if(scrollTop >= curAnchorScrollTop && (nextAnchorScrollTop && scrollTop < nextAnchorScrollTop)){
-          this.currentAnchor = this.simpleTitleList[i]
+          this.currentAnchorId = this.simpleTitleList[i].id
           break
         }
       }
+      this.setActiveAnchorCirclePosition()
     },
+    // 设置表示当前激活锚点的小球的位置
+    setActiveAnchorCirclePosition() {
+      this.$nextTick(() => {
+        const currentAnchorEl = document.querySelector('.anchor-item-wrapper.is-active')
+        this.activeAnchorTop = getRelativePosition(currentAnchorEl, this.$refs.anchor).y + currentAnchorEl.clientHeight/2
+      })
+    }
   }
 }
 </script>
@@ -131,7 +161,13 @@ export default {
 <style lang="less" scoped>
 .anchor-wrapper{
   position: fixed;
-  top: 100px;
-  right: 100px;
+  .acitve-anchor-circle{
+    position: absolute;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #e72528;
+  }
 }
 </style>

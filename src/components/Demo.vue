@@ -13,7 +13,12 @@
       <div class="module-content">
         <div class="sub-module">
           <div id="module31" class="sub-module-title">标题3-1</div>
-          <div class="sub-module-content">内容3-1</div>
+          <div class="sub-module-content">
+            <div id="module311" class="sub-module">
+              <div class="sub-module-title">标题3-1-1</div>
+              <div class="sub-module-content">内容3-1-1</div>
+            </div>
+          </div>
         </div>
         <div id="module32" class="sub-module">
           <div class="sub-module-title">标题3-2</div>
@@ -65,7 +70,13 @@ export default {
           children: [
             {
               id: 'module31',
-              label: '标题3-1'
+              label: '标题3-1',
+              children: [
+                {
+                  id: 'module311',
+                  label: '标题3-1-1'
+                }
+              ]
             },
             {
               id: 'module32',
