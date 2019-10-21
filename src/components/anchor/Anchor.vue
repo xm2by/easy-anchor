@@ -1,43 +1,12 @@
 <template>
   <div ref="anchor" class="anchor-wrapper" :style="{ top: position.top || 100 + 'px', left: `calc(100% - ${position.right || 200}px)`}">
-    <template v-for="item in titleList">
-      <anchor-group 
-        v-if="item.children && item.children.length" 
-        :key="item.id" 
-        :data="item"
-        @locateTitle="handleLocateTitle">
-        <template v-for="val in item.children">
-          <anchor-group 
-            v-if="val.children && val.children.length" 
-            :key="val.id" 
-            :data="val"
-            @locateTitle="handleLocateTitle">
-            <anchor-item
-              v-for="v in val.children"
-              :key="v.id" 
-              :data="v" 
-              @locateTitle="handleLocateTitle"></anchor-item>
-          </anchor-group>
-          <anchor-item
-            v-else
-            :key="val.id" 
-            :data="val" 
-            @locateTitle="handleLocateTitle"></anchor-item>
-        </template>
-      </anchor-group>
-      <anchor-item 
-        v-else 
-        :key="item.id" 
-        :data="item" 
-        @locateTitle="handleLocateTitle"></anchor-item>
-    </template>
+    <anchor-tree :title-list="titleList" @locateTitle="handleLocateTitle"></anchor-tree>
     <div class="acitve-anchor-circle" :style="{top: activeAnchorTop + 'px', left: '13px'}"></div>
   </div>
 </template>
 
 <script>
-import AnchorItem from './AnchorItem.vue'
-import AnchorGroup from './AnchorGroup.vue'
+import AnchorTree from './anchorTree.js'
 import { EventListener, nestToSimple, getRelativePosition } from './utils.js'
 export default {
   name: 'anchor',
@@ -47,8 +16,7 @@ export default {
     }
   },
   components: {
-    AnchorItem,
-    AnchorGroup
+    AnchorTree
   },
   props: {
     // 标题列表
@@ -151,7 +119,9 @@ export default {
     setActiveAnchorCirclePosition() {
       this.$nextTick(() => {
         const currentAnchorEl = document.querySelector('.anchor-item-wrapper.is-active')
-        this.activeAnchorTop = getRelativePosition(currentAnchorEl, this.$refs.anchor).y + currentAnchorEl.clientHeight/2
+        if(currentAnchorEl){
+          this.activeAnchorTop = getRelativePosition(currentAnchorEl, this.$refs.anchor).y + currentAnchorEl.clientHeight/2 
+        }
       })
     }
   }
