@@ -42,6 +42,24 @@
       <div id="module6" class="module-title">标题6</div>
       <div class="module-content">内容6</div>
     </div>
+    <div class="module module7">
+      <div id="module7" class="module-title">标题7</div>
+      <div class="module-content">
+        <div class="module module71">
+          <div id="module71" class="module-title">标题71</div>
+          <div class="module-content">内容71</div>
+        </div>
+        <div class="module module72">
+          <div id="module72" class="module-title">标题72</div>
+          <div class="module-content">内容72</div>
+        </div>
+        <div class="module module73">
+          <div id="module73" class="module-title">标题73</div>
+          <div class="module-content">内容73</div>
+        </div>
+        <anchor key="module7" :title-list="titleList1" container=".module7"></anchor>
+      </div>
+    </div>
     <anchor
       :title-list="titleList"></anchor>
   </div>
@@ -99,6 +117,24 @@ export default {
         {
           id: 'module6',
           label: '标题6'
+        },
+        {
+          id: 'module7',
+          label: '标题7'
+        }
+      ],
+      titleList1: [
+        {
+          id: 'module71',
+          label: '标题71'
+        },
+        {
+          id: 'module72',
+          label: '标题72'
+        },
+        {
+          id: 'module73',
+          label: '标题73'
         }
       ]
     }
@@ -112,6 +148,12 @@ export default {
   .module{
     overflow: hidden;
     margin-bottom: 16px;
+    &.module7{
+      overflow: auto;
+      width: 1200px;
+      height: 600px;
+      margin: 0 auto;
+    }
   }
   .module-title{
     font-size: 24px;

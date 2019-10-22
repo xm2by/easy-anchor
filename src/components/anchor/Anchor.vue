@@ -1,5 +1,5 @@
 <template>
-  <div ref="anchor" class="anchor-wrapper" :style="{ top: position.top || 100 + 'px', left: `calc(100% - ${position.right || 200}px)`}">
+  <div ref="anchor" class="anchor-wrapper" :style="{ top: anchorPosition.top, left: anchorPosition.left}">
     <anchor-tree :title-list="titleList" @locateTitle="handleLocateTitle"></anchor-tree>
     <div class="acitve-anchor-circle" :style="{top: activeAnchorTop + 'px', left: '13px'}"></div>
   </div>
@@ -41,7 +41,11 @@ export default {
       scrollEle: null,
       allTitleOffsetTop: [],
       currentAnchorId: null,
-      activeAnchorTop: 0
+      activeAnchorTop: 0,
+      anchorPosition: {
+        left: 0,
+        top: 0
+      }
     }
   },
   computed: {
@@ -50,22 +54,36 @@ export default {
     },
   },
   mounted() {
+    this.getScrollObj()
+    EventListener.add(this.scrollContainer, 'scroll', this.handleScroll)
+    this.computedAnchorPosition()
+    EventListener.add(window, 'scroll', this.handleWindowScroll)
     this.currentAnchorId = this.simpleTitleList[0].id
     this.setActiveAnchorCirclePosition()
-    this.getScrollObj()
     this.getAllTitleOffsetTop()
-    EventListener.add(this.scrollContainer, 'scroll', this.handleScroll)
   },
   beforeDestroy() {
+    EventListener.remove(window, 'scroll', this.handleWindowScroll)
     EventListener.remove(this.scrollContainer, 'scroll', this.handleScroll)
   },
   methods: {
     nestToSimple,
+    // 滚动内容在浏览器可视区域时对应的锚点导航才可以在可视区域
+    handleWindowScroll() {
+      this.computedAnchorPosition()
+    },
+    // 计算锚点导航位置
+    computedAnchorPosition() {
+      this.anchorPosition.top = this.container ? 
+      `${this.position.top || 100 + this.scrollEle.offsetTop - (document.documentElement || document.body).scrollTop}px`:
+      `${this.position.top || 100 + this.scrollEle.offsetTop}px`
+      this.anchorPosition.left = `calc(${this.scrollEle.offsetLeft + this.scrollEle.offsetWidth}px - ${this.position.right || 200}px)`
+    },
     // 获取滚动内容的外层容器对象及DOM
     getScrollObj() {
       if(this.container){
         this.scrollContainer = document.querySelector(this.container)
-        this.scrollEle = this.container
+        this.scrollEle = this.scrollContainer
       } else {
         this.scrollContainer = window
         this.scrollEle = document.documentElement || document.body
@@ -92,13 +110,14 @@ export default {
     handleScroll(e) {
       let scrollTop = this.scrollContainer === window ? document.documentElement.scrollTop || document.body.scrollTop : e.target.scrollTop
       this.getCurrentAnchor(scrollTop)
+      this.computedAnchorPosition() 
     },
     // 获取所有锚点对应标题在滚动内容区域中距离顶部的距离
     getAllTitleOffsetTop() {
       let i = -1
       let len = this.simpleTitleList.length
       while(++i < len){
-        this.allTitleOffsetTop.push(document.querySelector(`#${this.simpleTitleList[i].id}`).offsetTop)
+        this.allTitleOffsetTop.push(document.querySelector(`#${this.simpleTitleList[i].id}`).offsetTop - this.scrollEle.offsetTop )
       }
     },
     // 根据内容滚动距离获取当前锚点数据
@@ -118,7 +137,7 @@ export default {
     // 设置表示当前激活锚点的小球的位置
     setActiveAnchorCirclePosition() {
       this.$nextTick(() => {
-        const currentAnchorEl = document.querySelector('.anchor-item-wrapper.is-active')
+        const currentAnchorEl = this.$refs.anchor.querySelector('.anchor-item-wrapper.is-active')
         if(currentAnchorEl){
           this.activeAnchorTop = getRelativePosition(currentAnchorEl, this.$refs.anchor).y + currentAnchorEl.clientHeight/2 
         }
@@ -128,7 +147,7 @@ export default {
 }
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 .anchor-wrapper{
   position: fixed;
   .acitve-anchor-circle{
